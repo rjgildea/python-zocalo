@@ -1,0 +1,8 @@
+PyYAML
+graypy
+marshmallow
+pydantic
+requests
+sphinx
+sphinx_rtd_theme
+workflows
