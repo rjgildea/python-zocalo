@@ -44,22 +44,33 @@ graylog-alternative:
   host: loghost.diamond.ac.uk
   port: 12346
 
-# Configure a transport mechanism based on stomp. This uses a plugin named
-# 'stomp' which will be included in the workflows package.
-stomp-test:
-  plugin: stomp
-  username: user
-  password: 12345
-  host: stomp.server.localhost.example.com
-  port: 61613
-  prefix: zocalo
+# Configure a transport mechanism based on pika. This uses a plugin named
+# 'pika' which will be included in the workflows package.
+rabbitmq-test:
+  plugin: pika
+  host: localhost
+  # port: 5672
+  port: 5673
+  username: guest
+  password: guest
+  vhost: zocalo
+
+rabbitmq-api-test:
+  plugin: rabbitmqapi
+  # base_url: http://localhost:15672/api
+  base_url: http://localhost:15673/api
+  username: guest
+  password: guest
+  vhost: zocalo
 
 # Configurations can also be contained in a separate file. These files are read
 # on demand only. You can use this to store user credentials in a secure place
 # that is only accessible by certain users. File paths can be absolute or
 # relative to the referencing configuration file.
-stomp-live:
+rabbitmq-live:
   /path/secrets.yml
+rabbitmq-api-live:
+  /path/api-secrets.yml
 
 # Configuration files can reference plugins that do not exist on the system.
 # If these plugins are supposed to be loaded via an environment then a warning
@@ -84,12 +95,15 @@ environments:
     # element name then the plugin configuration will be overwritten.
     # Whereas if the included file lists plugins unterneath 'plugins:' for the
     # same environment name the lists are concatenated.
-    transport: stomp-live
+    transport: rabbitmq-live
     plugins:
-      - graylog-live
+      - rabbitmq-api-live
+    #   - graylog-live
 
   test:
-    transport: stomp-test
+    transport: rabbitmq-test
+    plugins:
+      - rabbitmq-api-test
 
   default: live
     # Environment definitions can also consist of a simple string only. In this
@@ -101,5 +115,5 @@ environments:
 # readable. Each file can have their own 'include:' section where further files
 # are included, these recursive includes are loaded in a depth-first manner.
 # Included files overwrite transport and plugin definitions in this file.
-include:
-  - /local/site/common_configuration.yml
+# include:
+#   - /local/site/common_configuration.yml

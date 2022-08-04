@@ -2,59 +2,30 @@
 Getting Started
 ###############
 
-Zocalo requires both ActiveMQ and Graylog to be setup and running. The easiest way of setting these up is via docker.
+Zocalo requires a suitable message broker to be configured. Currently it
+supports either `ActiveMQ`_ or `RabbitMQ`_, however the use of RabbitMQ is
+strongly recommended. Some features may not be available using ActiveMQ,
+and support may be deprecated in future versions of Zocalo.
 
-***************
-Active MQ
-***************
+.. _ActiveMQ: https://activemq.apache.org/components/classic/
+.. _RabbitMQ: https://www.rabbitmq.com/
 
-Pull and run the following image https://hub.docker.com/r/rmohr/activemq
-Follow the steps on docker hub for extracting the config and data into local mounts
-
-Configure DLQ locations, see https://activemq.apache.org/message-redelivery-and-dlq-handling for more info.
-
-In `conf/activemq.xml` under `policyEntries` add:
-
-.. code-block:: xml
-
-    <policyEntry queue=">">
-        <deadLetterStrategy>
-            <individualDeadLetterStrategy queuePrefix="DLQ." useQueueForQueueMessages="true"/>
-        </deadLetterStrategy>
-    </policyEntry>
-
-Make sure to enable scheduling, in `conf/activemq.xml` in the `broker` tag add the following property:
-
-.. code-block:: xml
-
-    schedulerSupport="true"
-
-Its also a good idea to enable removal of unused queues, see https://activemq.apache.org/delete-inactive-destinations
-
-In `conf/activemq.xml` in the `broker` tag add the following property:
-
-.. code-block:: xml
-
-    schedulePeriodForDestinationPurge="10000"
-
-Then in the `policyEntry` tag for `queue=">"` add the following properties:
-
-.. code-block:: xml
-
-    gcInactiveDestinations="true" inactiveTimoutBeforeGC="120000"
-
-Which will purge unused queues on a 120s basis.
-
-
-Then start ActiveMQ:
 
 .. code-block:: bash
 
-    docker run --name activemq -p 61613:61613 -p 8161:8161 \
-        -v "$(pwd)/conf:/opt/activemq/conf" \
-        -v "$(pwd)/data:/opt/activemq/data" \
-        rmohr/activemq
+    export ZOCALO_CONFIG=$PWD/contrib/site-configuration.yml
 
+RabbitMQ
+========
+
+Use e.g. `docker`_ or `podman`_ to start a RabbitMQ server:
+
+.. _docker: https://www.docker.com/
+.. _podman: https://podman.io/
+
+.. code-block:: bash
+
+    docker run -d --hostname my-rabbit --name zocalo-rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
 
 The container exposes the following ports:
 
@@ -63,12 +34,17 @@ The container exposes the following ports:
 
    * - Port
      - Description
-   * - 61613
-     - Stomp transport
-   * - 8161
-     - Web Console / Jolokia REST API
+   * - 5672
+     - AMQP 0-9-1
+   * - 15672
+     - Management UI and HTTP API
 
-A preconfigured docker image with these options applied is available here https://hub.docker.com/r/esrfbcu/zocalo-activemq
+Next, configure vhosts, exchanges, queues, bindings and policies using the
+``zocalo.configure_rabbitmq`` command:
+
+.. code-block:: bash
+
+    zocalo.configure_rabbitmq contrib/rabbitmq-configuration.yaml
 
 ***************
 Graylog
